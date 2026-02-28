@@ -3,6 +3,7 @@ package com.usuhackathon.trashtalk.ui
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,13 +22,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.usuhackathon.trashtalk.R
 import com.usuhackathon.trashtalk.data.*
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
 import com.usuhackathon.trashtalk.ui.theme.Ubuntu
@@ -108,7 +112,7 @@ fun HomeScreen(
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        item { 
+                        item {
                             Text("Leaderboard", fontFamily = TradeWinds, fontSize = 24.sp, modifier = Modifier.padding(vertical = 8.dp))
                         }
 
@@ -181,24 +185,24 @@ fun NoLeagueView(
         Spacer(modifier = Modifier.height(48.dp))
         Text("You are not in a league!", style = MaterialTheme.typography.headlineMedium, fontFamily = TradeWinds)
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Text("Create a League", style = MaterialTheme.typography.titleLarge)
         OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("League Name") })
         OutlinedTextField(value = desc, onValueChange = { desc = it }, label = { Text("Description") })
         Button(
-            onClick = { 
+            onClick = {
                 keyboardController?.hide()
-                onCreateLeague(name, desc) 
-            }, 
+                onCreateLeague(name, desc)
+            },
             modifier = Modifier.padding(top = 8.dp),
             enabled = !isLoading
-        ) { 
+        ) {
             if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
-            else Text("Create") 
+            else Text("Create")
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         Text("Or Join a League", style = MaterialTheme.typography.titleLarge)
         OutlinedTextField(
             value = searchQuery,
@@ -208,7 +212,7 @@ fun NoLeagueView(
             },
             label = { Text("Search League Name") }
         )
-        
+
         if (searchResults.isNotEmpty()) {
             Column(
                 modifier = Modifier
@@ -224,23 +228,23 @@ fun NoLeagueView(
                             supportingContent = { Text(league.description) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { 
+                                .clickable {
                                     keyboardController?.hide()
-                                    onJoinLeague(league.id) 
+                                    onJoinLeague(league.id)
                                 }
                         )
                     }
                 }
             }
         } else if (searchQuery.length >= 2) {
-             Text("No leagues found", modifier = Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall)
+            Text("No leagues found", modifier = Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall)
         }
-        
+
         if (isLoading) {
             Spacer(modifier = Modifier.height(16.dp))
             CircularProgressIndicator()
         }
-        
+
         Spacer(modifier = Modifier.height(48.dp))
     }
 }
@@ -309,21 +313,15 @@ fun TopProfileSection(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Placeholder profile pic (clickable for future)
-            Box(
+            Image(
+                painter = painterResource(id = R.drawable.profile),
+                contentDescription = "Profile Picture",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(Color.LightGray)
-                    .clickable { onProfileClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Pic",
-                    fontFamily = Ubuntu,
-                    color = Color.DarkGray
-                )
-            }
+                    .clickable { onProfileClick() }
+            )
 
             Spacer(modifier = Modifier.width(32.dp))
 
@@ -392,20 +390,14 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Bool
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
+            Image(
+                painter = painterResource(id = R.drawable.profile),
+                contentDescription = "Profile Picture",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Pic",
-                    fontFamily = Ubuntu,
-                    fontSize = 12.sp,
-                    color = Color.DarkGray
-                )
-            }
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
