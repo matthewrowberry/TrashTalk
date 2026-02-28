@@ -38,6 +38,7 @@ import kotlin.random.Random
 @Composable
 fun HomeScreen(
     onProfileClick: () -> Unit,
+    onFabClick: () -> Unit = {},
     onUserClick: (String, String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -54,7 +55,7 @@ fun HomeScreen(
         Scaffold(
             floatingActionButton = {
                 FloatingActionButton(
-                    onClick = { /* Could open chore list or something else */ },
+                    onClick = onFabClick,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White,
                     shape = CircleShape

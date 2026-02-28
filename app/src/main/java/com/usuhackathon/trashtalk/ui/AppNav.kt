@@ -1,21 +1,24 @@
 package com.usuhackathon.trashtalk.ui
 
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.usuhackathon.trashtalk.data.AuthService
 
-object Routes {
+private object Routes {
     const val Login = "login"
     const val SignUp = "signup"
     const val Home = "home"
     const val Settings = "settings"
-    const val Timeline = "timeline/{userId}/{userName}"
-    
-    fun timeline(userId: String, userName: String) = "timeline/$userId/$userName"
+    const val Submission = "submission"
 }
 
 @Composable
@@ -23,6 +26,19 @@ fun AppNav() {
     val nav = rememberNavController()
     val currentUser = AuthService.currentUser
     val startDestination = if (currentUser != null) Routes.Home else Routes.Login
+
+    // Hoisted state for the captured image
+    var capturedImage by remember { mutableStateOf<Bitmap?>(null) }
+
+    // Camera launcher contract
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            capturedImage = bitmap
+            nav.navigate(Routes.Submission)
+        }
+    }
 
     NavHost(navController = nav, startDestination = startDestination) {
         composable(Routes.Login) {
@@ -41,7 +57,7 @@ fun AppNav() {
         composable(Routes.SignUp) {
             SignUpScreen(
                 onAccountCreatedGoToLogin = {
-                    nav.popBackStack() // back to login
+                    nav.popBackStack()
                 }
             )
         }
@@ -51,8 +67,23 @@ fun AppNav() {
                 onProfileClick = {
                     nav.navigate(Routes.Settings)
                 },
-                onUserClick = { userId, userName ->
-                    nav.navigate(Routes.timeline(userId, userName))
+                onFabClick = {
+                    cameraLauncher.launch(null)
+                }
+            )
+        }
+
+        composable(Routes.Submission) {
+            SubmissionScreen(
+                imageBitmap = capturedImage,
+                onBack = {
+                    capturedImage = null
+                    nav.popBackStack()
+                },
+                onSubmit = {
+                    // Logic for submission goes here later
+                    capturedImage = null
+                    nav.popBackStack()
                 }
             )
         }
@@ -68,22 +99,6 @@ fun AppNav() {
                 onBack = {
                     nav.popBackStack()
                 }
-            )
-        }
-
-        composable(
-            Routes.Timeline,
-            arguments = listOf(
-                navArgument("userId") { type = NavType.StringType },
-                navArgument("userName") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId") ?: ""
-            val userName = backStackEntry.arguments?.getString("userName") ?: ""
-            TimelineScreen(
-                userId = userId,
-                userName = userName,
-                onBack = { nav.popBackStack() }
             )
         }
     }
