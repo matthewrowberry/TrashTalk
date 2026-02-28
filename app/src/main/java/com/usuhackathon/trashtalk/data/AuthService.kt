@@ -3,6 +3,7 @@ package com.usuhackathon.trashtalk.data
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.tasks.await
 
 sealed class AuthResult {
@@ -16,6 +17,9 @@ sealed class AuthResult {
 
 object AuthService {
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
+    val currentUser: FirebaseUser?
+        get() = auth.currentUser
 
     suspend fun signUp(email: String, password: String): String {
         val result = auth.createUserWithEmailAndPassword(email, password).await()
@@ -36,5 +40,9 @@ object AuthService {
         } catch (e: Exception) {
             AuthResult.Error(e.message ?: "Login failed")
         }
+    }
+
+    fun signOut() {
+        auth.signOut()
     }
 }

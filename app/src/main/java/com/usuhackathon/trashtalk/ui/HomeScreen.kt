@@ -1,6 +1,7 @@
 package com.usuhackathon.trashtalk.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -23,7 +24,7 @@ import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onProfileClick: () -> Unit = {}) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
@@ -46,7 +47,7 @@ fun HomeScreen() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                TopProfileSection()
+                TopProfileSection(onProfileClick = onProfileClick)
             }
 
             item {
@@ -85,7 +86,7 @@ fun HomeScreen() {
 }
 
 @Composable
-fun TopProfileSection() {
+fun TopProfileSection(onProfileClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -100,7 +101,8 @@ fun TopProfileSection() {
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(Color.LightGray),
+                        .background(Color.LightGray)
+                        .clickable { onProfileClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
