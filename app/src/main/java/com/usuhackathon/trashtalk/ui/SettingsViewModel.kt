@@ -1,0 +1,103 @@
+package com.usuhackathon.trashtalk.ui
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.usuhackathon.trashtalk.data.*
+import kotlinx.coroutines.launch
+
+data class SettingsState(
+    val chores: List<Chore> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val leagueID: String = ""
+)
+
+class SettingsViewModel : ViewModel() {
+    var state by mutableStateOf(SettingsState())
+        private set
+
+    init {
+        loadChores()
+    }
+
+    fun loadChores() {
+        val uid = AuthService.currentUser?.uid ?: return
+        viewModelScope.launch {
+            state = state.copy(isLoading = true)
+            try {
+                val profile = FirestoreService.getUserProfile(uid)
+                state = state.copy(leagueID = profile.leagueID)
+                if (profile.leagueID.isNotEmpty()) {
+                    val chores = RetrofitClient.instance.listChores(profile.leagueID, uid)
+                    state = state.copy(chores = chores)
+                }
+            } catch (e: Exception) {
+                state = state.copy(error = e.message)
+            } finally {
+                state = state.copy(isLoading = false)
+            }
+        }
+    }
+
+    fun addChore(name: String, description: String, points: Int) {
+        val uid = AuthService.currentUser?.uid ?: return
+        val leagueId = state.leagueID
+        if (leagueId.isEmpty()) return
+
+        viewModelScope.launch {
+            try {
+                val resp = RetrofitClient.instance.createChore(mapOf(
+                    "user_uid" to uid,
+                    "league_id" to leagueId,
+                    "name" to name,
+                    "description" to description,
+                    "points" to points
+                ))
+                if (resp.success) {
+                    loadChores()
+                }
+            } catch (e: Exception) {
+                state = state.copy(error = e.message)
+            }
+        }
+    }
+
+    fun updateChore(choreId: String, name: String?, description: String?, points: Int?) {
+        val uid = AuthService.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                val body = mutableMapOf<String, Any>("user_uid" to uid, "chore_id" to choreId)
+                name?.let { body["name"] = it }
+                description?.let { body["description"] = it }
+                points?.let { body["points"] = it }
+
+                val resp = RetrofitClient.instance.editChore(body)
+                if (resp.success) {
+                    loadChores()
+                }
+            } catch (e: Exception) {
+                state = state.copy(error = e.message)
+            }
+        }
+    }
+
+    fun deleteChore(choreId: String) {
+        val uid = AuthService.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                val resp = RetrofitClient.instance.deleteChore(mapOf(
+                    "user_uid" to uid,
+                    "chore_id" to choreId
+                ))
+                if (resp.success) {
+                    loadChores()
+                }
+            } catch (e: Exception) {
+                state = state.copy(error = e.message)
+            }
+        }
+    }
+}

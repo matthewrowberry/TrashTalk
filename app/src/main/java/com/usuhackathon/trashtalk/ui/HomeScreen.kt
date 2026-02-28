@@ -1,23 +1,32 @@
 package com.usuhackathon.trashtalk.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.usuhackathon.trashtalk.data.*
+import com.usuhackathon.trashtalk.ui.theme.TradeWinds
+import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
@@ -27,99 +36,41 @@ import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
-/**
- * NOTE: This file fixes the HomeScreen() issues:
- * - HomeScreenPreview now compiles (onProfileClick has a default)
- * - TopProfileSection receives the data it needs (instead of hardcoded)
- * - Firestore load runs safely and shows loading/error states
- * - List of other users comes from Firestore instead of hardcoded rows
- *
- * Firestore expectations (adjust field names if needed):
- * collection: "users"
- * fields: displayName (String), points (Long), tasksCompleted (Long, optional)
- */
-
-data class AppUser(
-    val id: String,
-    val displayName: String,
-    val points: Int,
-    val tasksCompleted: Int = 0,
-    val photoUrl: String? = null, // reserved for later
-)
-
-private fun QuerySnapshot.toUsers(): List<AppUser> =
-    documents.mapNotNull { doc ->
-        val displayName = doc.getString("displayName") ?: return@mapNotNull null
-        val points = (doc.getLong("points") ?: 0L).toInt()
-        val tasksCompleted = (doc.getLong("tasksCompleted") ?: 0L).toInt()
-        val photoUrl = doc.getString("photoUrl")
-
-        AppUser(
-            id = doc.id,
-            displayName = displayName,
-            points = points,
-            tasksCompleted = tasksCompleted,
-            photoUrl = photoUrl
-        )
-    }
-
 @Composable
 fun HomeScreen(
-    onProfileClick: () -> Unit = {},
-    firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    onProfileClick: () -> Unit,
+    onUserClick: (String, String) -> Unit,
+    viewModel: HomeViewModel = viewModel()
 ) {
-    val currentUid = auth.currentUser?.uid
+    val state = viewModel.state
+    val context = LocalContext.current
+    var showCompleteChoreDialog by remember { mutableStateOf<Chore?>(null) }
 
-    // Load users once. (If you want realtime updates later, use addSnapshotListener instead.)
-    val usersResult by produceState<Result<List<AppUser>>?>(initialValue = null, key1 = currentUid) {
-        value = runCatching {
-            firestore.collection("users").get().await().toUsers()
-        }
-    }
-
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* TODO */ },
-                containerColor = MaterialTheme.colorScheme.primary, // Dark Green
-                contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Task")
-            }
-        },
-        floatingActionButtonPosition = FabPosition.Center,
-        containerColor = MaterialTheme.colorScheme.background // Parchment
-    ) { innerPadding ->
-
-        when (val r = usersResult) {
-            null -> {
-                // Loading
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center
+    if (state.userProfile != null && state.userProfile.leagueID.isEmpty()) {
+        NoLeagueView(
+            onCreateLeague = { name, desc -> viewModel.createLeague(name, desc) },
+            onJoinLeague = { id -> viewModel.joinLeague(id) }
+        )
+    } else {
+        Scaffold(
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = { /* Could open chore list or something else */ },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White,
+                    shape = CircleShape
                 ) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Add, contentDescription = "Add Task")
                 }
-            }
-
-            else -> {
-                val users = r.getOrNull().orEmpty()
-                val currentUser = users.firstOrNull { it.id == currentUid }
-                val otherUsers = users.filterNot { it.id == currentUid }
-
-                // Generate random places for the other users.
-                val randomPlaces = remember(otherUsers) {
-                    val labels = listOf(
-                        "1st", "2nd", "3rd", "4th", "5th",
-                        "6th", "7th", "8th", "9th", "10th", "11th", "12th"
-                    )
-                    otherUsers.associate { it.id to labels.random(Random(System.currentTimeMillis())) }
+            },
+            floatingActionButtonPosition = FabPosition.Center,
+            containerColor = MaterialTheme.colorScheme.background
+        ) { innerPadding ->
+            if (state.isLoading && state.userProfile == null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-
+            } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -131,64 +82,151 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TopProfileSection(
+                            profile = state.userProfile,
                             onProfileClick = onProfileClick,
-                            displayName = currentUser?.displayName ?: "Unknown User",
-                            points = currentUser?.points ?: 0,
-                            tasks = currentUser?.tasksCompleted ?: 0,
-                            place = "—" // can compute actual rank later
+                            onPointsClick = {
+                                val uid = AuthService.currentUser?.uid
+                                if (uid != null) onUserClick(uid, state.userProfile?.displayName ?: "Me")
+                            }
                         )
                     }
 
-                    // Divider Line
-                    HorizontalDivider(
-                        color = Color.White,
-                        thickness = 2.dp
-                    )
+                    HorizontalDivider(color = Color.White, thickness = 2.dp)
 
-                    // Bottom Section
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        item { Spacer(modifier = Modifier.height(8.dp)) }
-
-                        if (r.isFailure) {
-                            item {
-                                Text(
-                                    text = "Failed to load users: ${r.exceptionOrNull()?.message ?: "Unknown error"}",
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(vertical = 8.dp)
-                                )
-                            }
+                        item { 
+                            Text("Leaderboard", fontFamily = TradeWinds, fontSize = 24.sp, modifier = Modifier.padding(vertical = 8.dp))
                         }
 
-                        items(otherUsers.size) { index ->
-                            val u = otherUsers[index]
+                        itemsIndexed(state.leaderboard) { index, entry ->
                             RoommateRow(
-                                name = u.displayName,
-                                place = randomPlaces[u.id] ?: "—",
-                                points = u.points,
-                                tasks = u.tasksCompleted
+                                name = entry.user_uid, // Ideally we'd map UID to names
+                                place = "${index + 1}${getOrdinal(index + 1)}",
+                                points = entry.total_points,
+                                tasks = entry.completed_count,
+                                isMe = entry.user_uid == AuthService.currentUser?.uid,
+                                onClick = { onUserClick(entry.user_uid, "Member") }
                             )
                         }
 
-                        item { Spacer(modifier = Modifier.height(72.dp)) } // Spacing for FAB
+                        item {
+                            Text("Available Chores", fontFamily = TradeWinds, fontSize = 24.sp, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                        }
+
+                        itemsIndexed(state.chores) { _, chore ->
+                            ChoreRow(chore = chore, onComplete = { showCompleteChoreDialog = chore })
+                        }
+
+                        item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
                 }
+            }
+        }
+    }
+
+    if (showCompleteChoreDialog != null) {
+        CompleteChoreDialog(
+            chore = showCompleteChoreDialog!!,
+            onDismiss = { showCompleteChoreDialog = null },
+            onComplete = { comments, imageUri ->
+                viewModel.completeChore(showCompleteChoreDialog!!, comments, imageUri, context)
+                showCompleteChoreDialog = null
+            }
+        )
+    }
+}
+
+private fun getOrdinal(i: Int): String {
+    val suffixes = arrayOf("th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th")
+    return if (i % 100 in 11..13) "th" else suffixes[i % 10]
+}
+
+@Composable
+fun NoLeagueView(onCreateLeague: (String, String) -> Unit, onJoinLeague: (String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var desc by remember { mutableStateOf("") }
+    var leagueId by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("You are not in a league!", style = MaterialTheme.typography.headlineMedium, fontFamily = TradeWinds)
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        Text("Create a League", style = MaterialTheme.typography.titleLarge)
+        OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("League Name") })
+        OutlinedTextField(value = desc, onValueChange = { desc = it }, label = { Text("Description") })
+        Button(onClick = { onCreateLeague(name, desc) }) { Text("Create") }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Text("Or Join a League", style = MaterialTheme.typography.titleLarge)
+        OutlinedTextField(value = leagueId, onValueChange = { leagueId = it }, label = { Text("League ID") })
+        Button(onClick = { onJoinLeague(leagueId) }) { Text("Join") }
+    }
+}
+
+@Composable
+fun ChoreRow(chore: Chore, onComplete: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(chore.name, fontWeight = FontWeight.Bold, fontFamily = Ubuntu)
+                Text(chore.description, fontSize = 12.sp, color = Color.Gray, fontFamily = Ubuntu)
+            }
+            Text("+${chore.points}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
+            IconButton(onClick = onComplete) {
+                Icon(Icons.Default.Check, contentDescription = "Complete", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }
 }
 
 @Composable
+fun CompleteChoreDialog(chore: Chore, onDismiss: () -> Unit, onComplete: (String, Uri?) -> Unit) {
+    var comments by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        imageUri = uri
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Complete ${chore.name}") },
+        text = {
+            Column {
+                OutlinedTextField(value = comments, onValueChange = { comments = it }, label = { Text("Comments") })
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { launcher.launch("image/*") }) {
+                    Text(if (imageUri == null) "Add Proof Image" else "Image Selected")
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onComplete(comments, imageUri) }) { Text("Submit") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
 fun TopProfileSection(
+    profile: UserProfile?,
     onProfileClick: () -> Unit,
-    displayName: String,
-    points: Int,
-    tasks: Int,
-    place: String,
+    onPointsClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -240,9 +278,8 @@ fun TopProfileSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatItem(label = "PLACE", value = place)
-            StatItem(label = "POINTS", value = points.toString())
-            StatItem(label = "TASKS", value = tasks.toString())
+            StatItem(label = "POINTS", value = profile?.points?.toString() ?: "0", onClick = onPointsClick)
+            StatItem(label = "LEAGUE", value = if(profile?.leagueID?.isEmpty() == true) "None" else "Active")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -250,8 +287,11 @@ fun TopProfileSection(
 }
 
 @Composable
-fun StatItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun StatItem(label: String, value: String, onClick: () -> Unit = {}) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { onClick() }
+    ) {
         Text(
             text = value,
             fontFamily = TradeWinds,
@@ -268,9 +308,9 @@ fun StatItem(label: String, value: String) {
 }
 
 @Composable
-fun RoommateRow(name: String, place: String, points: Int, tasks: Int) {
+fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Boolean = false, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {

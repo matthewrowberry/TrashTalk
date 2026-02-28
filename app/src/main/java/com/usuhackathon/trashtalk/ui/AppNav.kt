@@ -1,16 +1,21 @@
 package com.usuhackathon.trashtalk.ui
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.usuhackathon.trashtalk.data.AuthService
 
-private object Routes {
+object Routes {
     const val Login = "login"
     const val SignUp = "signup"
     const val Home = "home"
     const val Settings = "settings"
+    const val Timeline = "timeline/{userId}/{userName}"
+    
+    fun timeline(userId: String, userName: String) = "timeline/$userId/$userName"
 }
 
 @Composable
@@ -45,6 +50,9 @@ fun AppNav() {
             HomeScreen(
                 onProfileClick = {
                     nav.navigate(Routes.Settings)
+                },
+                onUserClick = { userId, userName ->
+                    nav.navigate(Routes.timeline(userId, userName))
                 }
             )
         }
@@ -60,6 +68,22 @@ fun AppNav() {
                 onBack = {
                     nav.popBackStack()
                 }
+            )
+        }
+
+        composable(
+            Routes.Timeline,
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType },
+                navArgument("userName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            val userName = backStackEntry.arguments?.getString("userName") ?: ""
+            TimelineScreen(
+                userId = userId,
+                userName = userName,
+                onBack = { nav.popBackStack() }
             )
         }
     }
