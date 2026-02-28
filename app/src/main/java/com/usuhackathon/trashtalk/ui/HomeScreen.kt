@@ -60,8 +60,11 @@ fun HomeScreen(
                     contentColor = Color.White,
                     shape = CircleShape
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Task")
-                }
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Task",
+                        modifier = Modifier.size(36.dp)
+                    )                }
             },
             floatingActionButtonPosition = FabPosition.Center,
             containerColor = MaterialTheme.colorScheme.background
