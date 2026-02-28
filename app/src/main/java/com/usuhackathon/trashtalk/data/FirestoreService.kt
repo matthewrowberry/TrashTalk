@@ -27,4 +27,21 @@ object FirestoreService {
             points = snap.getLong("points") ?: 0L
         )
     }
+
+    suspend fun getLeagueMembers(leagueID: String): List<UserProfile> {
+        if (leagueID.isEmpty()) return emptyList()
+        val snap = db.collection("users")
+            .whereEqualTo("leagueID", leagueID)
+            .get()
+            .await()
+        
+        return snap.documents.map { doc ->
+            UserProfile(
+                displayName = doc.getString("displayName").orEmpty(),
+                email = doc.getString("email").orEmpty(),
+                leagueID = doc.getString("leagueID").orEmpty(),
+                points = doc.getLong("points") ?: 0L
+            )
+        }.sortedByDescending { it.points }
+    }
 }

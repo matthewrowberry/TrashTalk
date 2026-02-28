@@ -1,6 +1,7 @@
 package com.usuhackathon.trashtalk.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -17,17 +18,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.usuhackathon.trashtalk.data.UserProfile
 import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
 import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onProfileClick: () -> Unit,
+    viewModel: HomeViewModel = viewModel()
+) {
+    val userProfile = viewModel.userProfile
+    val isLoading = viewModel.isLoading
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO */ },
-                containerColor = MaterialTheme.colorScheme.primary, // Dark Green
+                onClick = { /* TODO: Add Task */ },
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
                 shape = CircleShape
             ) {
@@ -35,50 +44,67 @@ fun HomeScreen() {
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
-        containerColor = MaterialTheme.colorScheme.background // Parchment
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            // Top Section - Dark Green Background
-            Surface(
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                TopProfileSection()
+        if (isLoading && userProfile == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-
-            // Divider Line
-            HorizontalDivider(
-                color = Color.White,
-                thickness = 2.dp
-            )
-
-            // Bottom Section - Parchment Background with White Rows
-            LazyColumn(
+        } else {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(innerPadding)
             ) {
-                item { Spacer(modifier = Modifier.height(8.dp)) }
+                // Top Section - Dark Green Background
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TopProfileSection(
+                        profile = userProfile,
+                        onProfileClick = onProfileClick
+                    )
+                }
 
-                item { RoommateRow(name = "Sammy", place = "1st", points = 320, tasks = 12) }
-                item { RoommateRow(name = "Tommy", place = "2nd", points = 150, tasks = 5) }
-                item { RoommateRow(name = "You", place = "3rd", points = 120, tasks = 4) }
-                item { RoommateRow(name = "Donald", place = "4th", points = 35, tasks = 2) }
-                item { RoommateRow(name = "Jeffrey Epstein", place = "5th", points = 5, tasks = 1) }
+                // Divider Line
+                HorizontalDivider(
+                    color = Color.White,
+                    thickness = 2.dp
+                )
 
-                item { Spacer(modifier = Modifier.height(72.dp)) } // Spacing for FAB
+                // Bottom Section - Placeholder Leaderboard
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+
+                    // Default/Static data for now until league endpoint is ready
+                    item {
+                        RoommateRow(
+                            name = "You",
+                            place = "1st",
+                            points = userProfile?.points?.toInt() ?: 0,
+                            tasks = 0,
+                            isMe = true
+                        )
+                    }
+
+                    item { Spacer(modifier = Modifier.height(72.dp)) }
+                }
             }
         }
     }
 }
 
 @Composable
-fun TopProfileSection() {
+fun TopProfileSection(
+    profile: UserProfile?,
+    onProfileClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -92,28 +118,31 @@ fun TopProfileSection() {
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(Color.LightGray),
+                    .background(Color.LightGray)
+                    .clickable { onProfileClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Pic",
+                    text = profile?.displayName?.take(1)?.uppercase() ?: "P",
                     fontFamily = Ubuntu,
-                    color = Color.DarkGray
+                    color = Color.DarkGray,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
-            // Increased padding between picture and text
             Spacer(modifier = Modifier.width(32.dp))
 
             Column {
                 Text(
-                    text = "JOHN DOE",
+                    text = profile?.displayName?.uppercase() ?: "LOADING...",
                     fontFamily = TradeWinds,
-                    fontSize = 38.sp,
-                    color = Color.White
+                    fontSize = 32.sp,
+                    color = Color.White,
+                    lineHeight = 36.sp
                 )
                 Text(
-                    text = "Season ends in 3 days",
+                    text = "Welcome back!",
                     fontFamily = Ubuntu,
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.8f)
@@ -127,9 +156,8 @@ fun TopProfileSection() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatItem(label = "PLACE", value = "3rd")
-            StatItem(label = "POINTS", value = "120")
-            StatItem(label = "TASKS", value = "4")
+            StatItem(label = "POINTS", value = profile?.points?.toString() ?: "0")
+            StatItem(label = "TASKS", value = "0")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -141,7 +169,7 @@ fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            fontFamily = TradeWinds, // Updated to TradeWinds
+            fontFamily = TradeWinds,
             fontSize = 28.sp,
             color = Color.White
         )
@@ -155,11 +183,14 @@ fun StatItem(label: String, value: String) {
 }
 
 @Composable
-fun RoommateRow(name: String, place: String, points: Int, tasks: Int) {
+fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Boolean = false) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isMe) Color(0xFFE8F5E9) else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -167,25 +198,24 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Small Profile Picture Placeholder
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Color.LightGray),
+                    .background(if (isMe) MaterialTheme.colorScheme.primary else Color.LightGray),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Pic",
+                    text = name.take(1).uppercase(),
                     fontFamily = Ubuntu,
-                    fontSize = 12.sp,
-                    color = Color.DarkGray
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isMe) Color.White else Color.DarkGray
                 )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Name and Place
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = name,
@@ -202,7 +232,6 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int) {
                 )
             }
 
-            // Stats
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "$points pts",
@@ -226,6 +255,6 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int) {
 @Composable
 fun HomeScreenPreview() {
     TrashTalkTheme {
-        HomeScreen()
+        // Mock Preview
     }
 }
