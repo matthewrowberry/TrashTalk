@@ -7,16 +7,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.usuhackathon.trashtalk.login.LoginViewModel
+import com.usuhackathon.trashtalk.storage.UserData
 import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
 
 @Composable
-fun LoginScreen() {
-    var username by remember { mutableStateOf("") }
+fun LoginScreen(viewModel: LoginViewModel = LoginViewModel(UserData(LocalContext.current))) {
+
     var password by remember { mutableStateOf("") }
 
     Column(
@@ -45,8 +48,8 @@ fun LoginScreen() {
         Spacer(modifier = Modifier.height(48.dp))
 
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
+            value = viewModel.username,
+            onValueChange = { viewModel.username = it },
             label = { Text("Username") },
             modifier = Modifier.fillMaxWidth()
         )
