@@ -27,6 +27,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.usuhackathon.trashtalk.data.*
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
 import com.usuhackathon.trashtalk.ui.theme.Ubuntu
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
+import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
+import com.usuhackathon.trashtalk.ui.theme.TradeWinds
+import com.usuhackathon.trashtalk.ui.theme.Ubuntu
+import kotlinx.coroutines.tasks.await
+import kotlin.random.Random
 
 @Composable
 fun HomeScreen(
@@ -68,6 +76,7 @@ fun HomeScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
+                    // Top Section - Dark Green Background
                     Surface(
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.fillMaxWidth()
@@ -228,6 +237,7 @@ fun TopProfileSection(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
+            // Placeholder profile pic (clickable for future)
             Box(
                 modifier = Modifier
                     .size(72.dp)
@@ -237,11 +247,9 @@ fun TopProfileSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = profile?.displayName?.take(1)?.uppercase() ?: "P",
+                    text = "Pic",
                     fontFamily = Ubuntu,
-                    color = Color.DarkGray,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    color = Color.DarkGray
                 )
             }
 
@@ -249,14 +257,14 @@ fun TopProfileSection(
 
             Column {
                 Text(
-                    text = profile?.displayName?.uppercase() ?: "LOADING...",
+                    text = displayName.uppercase(),
                     fontFamily = TradeWinds,
-                    fontSize = 32.sp,
-                    color = Color.White,
-                    lineHeight = 36.sp
+                    fontSize = 38.sp,
+                    lineHeight = 46.sp, // adds space between lines if the name wraps
+                    color = Color.White
                 )
                 Text(
-                    text = "Welcome back!",
+                    text = "Season ends in 3 days",
                     fontFamily = Ubuntu,
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.8f)
@@ -304,10 +312,7 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Bool
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isMe) Color(0xFFE8F5E9) else Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
             modifier = Modifier
@@ -319,15 +324,14 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Bool
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(if (isMe) MaterialTheme.colorScheme.primary else Color.LightGray),
+                    .background(Color.LightGray),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = name.take(1).uppercase(),
+                    text = "Pic",
                     fontFamily = Ubuntu,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isMe) Color.White else Color.DarkGray
+                    fontSize = 12.sp,
+                    color = Color.DarkGray
                 )
             }
 
@@ -365,5 +369,13 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Bool
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    TrashTalkTheme {
+        HomeScreen(onProfileClick = {})
     }
 }
