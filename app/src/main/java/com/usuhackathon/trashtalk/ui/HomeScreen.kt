@@ -113,14 +113,13 @@ fun HomeScreen(
                         }
 
                         itemsIndexed(state.leaderboard) { index, entry ->
-                            val displayName = entry.display_name ?: entry.user_uid
                             RoommateRow(
-                                name = displayName,
+                                name = entry.user_uid, // Ideally we'd map UID to names
                                 place = "${index + 1}${getOrdinal(index + 1)}",
                                 points = entry.total_points,
                                 tasks = entry.completed_count,
                                 isMe = entry.user_uid == AuthService.currentUser?.uid,
-                                onClick = { onUserClick(entry.user_uid, displayName) }
+                                onClick = { onUserClick(entry.user_uid, "Member") }
                             )
                         }
 

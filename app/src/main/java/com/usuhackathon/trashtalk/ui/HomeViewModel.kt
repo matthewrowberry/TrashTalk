@@ -74,14 +74,9 @@ class HomeViewModel : ViewModel() {
 
     fun joinLeague(leagueId: String) {
         val uid = AuthService.currentUser?.uid ?: return
-        val displayName = AuthService.currentUser?.displayName ?: state.userProfile?.displayName ?: ""
         viewModelScope.launch {
             try {
-                val resp = RetrofitClient.instance.joinLeague(mapOf(
-                    "user_uid" to uid, 
-                    "league_id" to leagueId,
-                    "display_name" to displayName
-                ))
+                val resp = RetrofitClient.instance.joinLeague(mapOf("user_uid" to uid, "league_id" to leagueId))
                 if (resp.success) {
                     val profile = state.userProfile?.copy(leagueID = leagueId)
                     if (profile != null) {
@@ -97,14 +92,12 @@ class HomeViewModel : ViewModel() {
 
     fun createLeague(name: String, description: String) {
         val uid = AuthService.currentUser?.uid ?: return
-        val displayName = AuthService.currentUser?.displayName ?: state.userProfile?.displayName ?: ""
         viewModelScope.launch {
             try {
                 val resp = RetrofitClient.instance.createLeague(mapOf(
                     "user_uid" to uid,
                     "name" to name,
-                    "description" to description,
-                    "display_name" to displayName
+                    "description" to description
                 ))
                 if (resp.success && resp.league_id != null) {
                     val profile = state.userProfile?.copy(leagueID = resp.league_id)
