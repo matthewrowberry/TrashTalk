@@ -1,5 +1,4 @@
 plugins {
-    id("com.android.application")
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
@@ -7,11 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.trashtalk"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.trashtalk"
