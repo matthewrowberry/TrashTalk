@@ -12,7 +12,8 @@ data class TimelineState(
     val completions: List<UserCompletion> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val leagueId: String = ""
+    val leagueId: String = "",
+    val requesterUid: String = ""
 )
 
 class TimelineViewModel : ViewModel() {
@@ -21,6 +22,9 @@ class TimelineViewModel : ViewModel() {
 
     fun loadTimeline(targetUid: String) {
         val uid = AuthService.currentUser?.uid ?: return
+        // Store the requester UID in state immediately so the UI can use it
+        state = state.copy(requesterUid = uid)
+
         viewModelScope.launch {
             state = state.copy(isLoading = true)
             try {

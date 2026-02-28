@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -100,7 +101,8 @@ fun HomeScreen(
                             onPointsClick = {
                                 val uid = AuthService.currentUser?.uid
                                 if (uid != null) onUserClick(uid, state.userProfile?.displayName ?: "Me")
-                            }
+                            },
+                            onRefresh = { viewModel.loadData() }
                         )
                     }
 
@@ -117,13 +119,14 @@ fun HomeScreen(
                         }
 
                         itemsIndexed(state.leaderboard) { index, entry ->
+                            val displayName = entry.display_name ?: entry.user_uid
                             RoommateRow(
-                                name = entry.user_uid, // Ideally we'd map UID to names
+                                name = displayName,
                                 place = "${index + 1}${getOrdinal(index + 1)}",
                                 points = entry.total_points,
                                 tasks = entry.completed_count,
                                 isMe = entry.user_uid == AuthService.currentUser?.uid,
-                                onClick = { onUserClick(entry.user_uid, "Member") }
+                                onClick = { onUserClick(entry.user_uid, displayName) }
                             )
                         }
 
@@ -302,7 +305,8 @@ fun CompleteChoreDialog(chore: Chore, onDismiss: () -> Unit, onComplete: (String
 fun TopProfileSection(
     profile: UserProfile?,
     onProfileClick: () -> Unit,
-    onPointsClick: () -> Unit
+    onPointsClick: () -> Unit,
+    onRefresh: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -325,7 +329,7 @@ fun TopProfileSection(
 
             Spacer(modifier = Modifier.width(32.dp))
 
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = (profile?.displayName ?: "User").uppercase(),
                     fontFamily = TradeWinds,
@@ -338,6 +342,14 @@ fun TopProfileSection(
                     fontFamily = Ubuntu,
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.8f)
+                )
+            }
+
+            IconButton(onClick = onRefresh) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Refresh",
+                    tint = Color.White
                 )
             }
         }

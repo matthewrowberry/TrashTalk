@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.usuhackathon.trashtalk.data.AuthService
 import com.usuhackathon.trashtalk.data.UserCompletion
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
 import com.usuhackathon.trashtalk.ui.theme.Ubuntu
@@ -38,7 +37,6 @@ fun TimelineScreen(
     viewModel: TimelineViewModel = viewModel()
 ) {
     val state = viewModel.state
-    val requesterUid = AuthService.currentUser?.uid ?: ""
 
     LaunchedEffect(userId) {
         viewModel.loadTimeline(userId)
@@ -100,7 +98,7 @@ fun TimelineScreen(
                     }
                 }
                 items(state.completions) { completion ->
-                    TimelinePostItem(completion, requesterUid, state.leagueId)
+                    TimelinePostItem(completion, state.requesterUid, state.leagueId)
                 }
             }
         }
@@ -141,7 +139,7 @@ fun TimelinePostItem(completion: UserCompletion, requesterUid: String, leagueId:
             }
         }
 
-        if (completion.has_proof && completion.proof_filename != null && leagueId.isNotEmpty()) {
+        if (completion.has_proof && completion.proof_filename != null && leagueId.isNotEmpty() && requesterUid.isNotEmpty()) {
             val token = sha256(leagueId + requesterUid + "simple_salt")
             val imageUrl = "https://mrowberry.com/trashtalk/view_proof_image.php?f=${completion.proof_filename}&u=${requesterUid}&t=$token"
             
@@ -162,7 +160,6 @@ fun TimelinePostItem(completion: UserCompletion, requesterUid: String, leagueId:
                         onSuccess = { _, _ -> Log.d("TimelineScreen", "Coil: Success for $imageUrl") },
                         onError = { _, result -> 
                             Log.e("TimelineScreen", "Coil: Error for $imageUrl", result.throwable)
-                            // If you see a 403 or 401, it's likely the token or UID parameters
                         }
                     )
                     .build()
@@ -181,8 +178,8 @@ fun TimelinePostItem(completion: UserCompletion, requesterUid: String, leagueId:
             )
         } else if (completion.has_proof) {
             // Log why the image isn't even attempting to load
-            LaunchedEffect(completion.completion_id) {
-                Log.w("TimelineScreen", "Proof image exists but request not built: filename=${completion.proof_filename}, leagueId=$leagueId")
+            LaunchedEffect(completion.completion_id, leagueId, requesterUid) {
+                Log.w("TimelineScreen", "Proof image exists but request NOT built: filename=${completion.proof_filename}, leagueId=$leagueId, requesterUid=$requesterUid")
             }
         }
     }
