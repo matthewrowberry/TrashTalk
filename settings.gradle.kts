@@ -24,3 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "TrashTalk"
 include(":app")
+include(":app:ui")
+include(":app:db")
+include(":app:logic")
