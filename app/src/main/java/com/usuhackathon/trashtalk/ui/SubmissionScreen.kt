@@ -27,7 +27,7 @@ fun SubmissionScreen(
 ) {
     var noteText by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
-    val categories = listOf("Vacuuming", "Laundry", "Basic", "Dishes", "Deep")
+    val categories = listOf("Basic Clean", "Deep Clean", "Dishes", "Laundry", "Trash", "Vacuuming")
     var selectedCategory by remember { mutableStateOf(categories[0]) }
 
     Scaffold(
