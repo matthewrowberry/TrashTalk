@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.usuhackathon.trashtalk"
-
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.usuhackathon.trashtalk"
