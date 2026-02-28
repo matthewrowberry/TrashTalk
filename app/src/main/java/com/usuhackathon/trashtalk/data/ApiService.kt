@@ -31,6 +31,22 @@ data class Chore(
     val creator_uid: String? = null
 )
 
+data class CreateChoreRequest(
+    val user_uid: String,
+    val league_id: String,
+    val name: String,
+    val description: String,
+    val points: Int
+)
+
+data class EditChoreRequest(
+    val user_uid: String,
+    val chore_id: String,
+    val name: String? = null,
+    val description: String? = null,
+    val points: Int? = null
+)
+
 data class CreateChoreResponse(val success: Boolean, val chore_id: String? = null, val error: String? = null)
 
 data class CompletionResponse(val success: Boolean, val completion_id: String? = null, val error: String? = null)
@@ -76,10 +92,10 @@ interface ApiService {
     ): LeagueMembersResponse
 
     @POST("create_chore.php")
-    suspend fun createChore(@Body body: Map<String, Any>): CreateChoreResponse
+    suspend fun createChore(@Body body: CreateChoreRequest): CreateChoreResponse
 
     @POST("edit_chore.php")
-    suspend fun editChore(@Body body: Map<String, Any>): GenericResponse
+    suspend fun editChore(@Body body: EditChoreRequest): GenericResponse
 
     @POST("delete_chore.php")
     suspend fun deleteChore(@Body body: Map<String, String>): GenericResponse

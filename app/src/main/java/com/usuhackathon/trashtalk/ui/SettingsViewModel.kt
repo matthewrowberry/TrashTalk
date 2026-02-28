@@ -50,13 +50,15 @@ class SettingsViewModel : ViewModel() {
         viewModelScope.launch {
             state = state.copy(isLoading = true, error = null)
             try {
-                val resp = RetrofitClient.instance.createChore(mapOf(
-                    "user_uid" to uid,
-                    "league_id" to leagueId,
-                    "name" to name,
-                    "description" to description,
-                    "points" to points
-                ))
+                val resp = RetrofitClient.instance.createChore(
+                    CreateChoreRequest(
+                        user_uid = uid,
+                        league_id = leagueId,
+                        name = name,
+                        description = description,
+                        points = points
+                    )
+                )
                 if (resp.success) {
                     loadChores()
                 } else {
@@ -73,12 +75,15 @@ class SettingsViewModel : ViewModel() {
         viewModelScope.launch {
             state = state.copy(isLoading = true, error = null)
             try {
-                val body = mutableMapOf<String, Any>("user_uid" to uid, "chore_id" to choreId)
-                name?.let { body["name"] = it }
-                description?.let { body["description"] = it }
-                points?.let { body["points"] = it }
+                val req = EditChoreRequest(
+                    user_uid = uid,
+                    chore_id = choreId,
+                    name = name,
+                    description = description,
+                    points = points
+                )
 
-                val resp = RetrofitClient.instance.editChore(body)
+                val resp = RetrofitClient.instance.editChore(req)
                 if (resp.success) {
                     loadChores()
                 } else {

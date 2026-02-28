@@ -1,8 +1,10 @@
 package com.usuhackathon.trashtalk.ui
 
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +21,7 @@ private object Routes {
     const val Home = "home"
     const val Settings = "settings"
     const val Submission = "submission"
+    const val Timeline = "timeline"
 }
 
 @Composable
@@ -68,8 +71,22 @@ fun AppNav() {
                     nav.navigate(Routes.Settings)
                 },
                 onFabClick = {
-                    cameraLauncher.launch(null)
+                    cameraLauncher.launch()
+                },
+                onUserClick = { userId, userName ->
+                    val encodedName = Uri.encode(userName)
+                    nav.navigate("${Routes.Timeline}/$userId/$encodedName")
                 }
+            )
+        }
+
+        composable("${Routes.Timeline}/{userId}/{userName}") { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            val userName = backStackEntry.arguments?.getString("userName") ?: ""
+            TimelineScreen(
+                userId = userId,
+                userName = userName,
+                onBack = { nav.popBackStack() }
             )
         }
 
