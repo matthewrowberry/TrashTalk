@@ -2,19 +2,22 @@ package com.usuhackathon.trashtalk.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.usuhackathon.trashtalk.data.AuthService
 import com.usuhackathon.trashtalk.data.FirestoreService
 import com.usuhackathon.trashtalk.data.UserProfile
 import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import kotlinx.coroutines.launch
-import androidx.compose.material3.LocalTextStyle
 
 @Composable
 fun SignUpScreen(
@@ -23,6 +26,7 @@ fun SignUpScreen(
     var displayName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -64,7 +68,19 @@ fun SignUpScreen(
             onValueChange = { password = it },
             label = { Text("Password", fontFamily = Ubuntu) },
             textStyle = LocalTextStyle.current.copy(fontFamily = Ubuntu),
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val image = if (passwordVisible)
+                    Icons.Filled.Visibility
+                else
+                    Icons.Filled.VisibilityOff
+
+                val description = if (passwordVisible) "Hide password" else "Show password"
+
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = image, contentDescription = description)
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
 
