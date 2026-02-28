@@ -222,6 +222,7 @@ fun TopProfileSection(
                     text = displayName.uppercase(),
                     fontFamily = TradeWinds,
                     fontSize = 38.sp,
+                    lineHeight = 46.sp, // adds space between lines if the name wraps
                     color = Color.White
                 )
                 Text(
