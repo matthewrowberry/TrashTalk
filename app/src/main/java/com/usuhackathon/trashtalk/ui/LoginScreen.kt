@@ -13,6 +13,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
+import com.usuhackathon.trashtalk.ui.theme.TradeWinds
+import com.usuhackathon.trashtalk.ui.theme.Ubuntu
+import androidx.compose.material3.LocalTextStyle
 
 @Composable
 fun LoginScreen() {
@@ -39,7 +42,9 @@ fun LoginScreen() {
         Text(
             text = "TRASH TALK",
             fontSize = 36.sp,
-            fontWeight = FontWeight.Bold
+            fontFamily = TradeWinds,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(48.dp))
@@ -47,7 +52,13 @@ fun LoginScreen() {
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Username") },
+            label = {
+                Text(
+                    text = "Username",
+                    fontFamily = Ubuntu
+                )
+            },
+            textStyle = LocalTextStyle.current.copy(fontFamily = Ubuntu),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -56,7 +67,13 @@ fun LoginScreen() {
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
+            label = {
+                Text(
+                    text = "Password",
+                    fontFamily = Ubuntu
+                )
+            },
+            textStyle = LocalTextStyle.current.copy(fontFamily = Ubuntu),
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
@@ -71,14 +88,20 @@ fun LoginScreen() {
                 onClick = { /* TODO */ },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("LOGIN")
+                Text(
+                    text = "LOGIN",
+                    fontFamily = Ubuntu
+                )
             }
 
             OutlinedButton(
                 onClick = { /* TODO */ },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("SIGN UP")
+                Text(
+                    text = "SIGN UP",
+                    fontFamily = Ubuntu
+                )
             }
         }
     }
