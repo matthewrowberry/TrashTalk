@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "895283963752",
+    "project_id": "trash-talk-f6f39",
+    "storage_bucket": "trash-talk-f6f39.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:895283963752:android:e193396e2285cf90f358dd",
+        "android_client_info": {
+          "package_name": "com.usuhackathon.trashtalk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDA1wOn6fs49UVa8TlKnGCse209TzIh4Q0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
