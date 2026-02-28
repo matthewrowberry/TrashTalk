@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,25 +18,71 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.usuhackathon.trashtalk.data.UserProfile
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
-import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
+import com.usuhackathon.trashtalk.ui.theme.Ubuntu
+import kotlinx.coroutines.tasks.await
+import kotlin.random.Random
+
+/**
+ * NOTE: This file fixes the HomeScreen() issues:
+ * - HomeScreenPreview now compiles (onProfileClick has a default)
+ * - TopProfileSection receives the data it needs (instead of hardcoded)
+ * - Firestore load runs safely and shows loading/error states
+ * - List of other users comes from Firestore instead of hardcoded rows
+ *
+ * Firestore expectations (adjust field names if needed):
+ * collection: "users"
+ * fields: displayName (String), points (Long), tasksCompleted (Long, optional)
+ */
+
+data class AppUser(
+    val id: String,
+    val displayName: String,
+    val points: Int,
+    val tasksCompleted: Int = 0,
+    val photoUrl: String? = null, // reserved for later
+)
+
+private fun QuerySnapshot.toUsers(): List<AppUser> =
+    documents.mapNotNull { doc ->
+        val displayName = doc.getString("displayName") ?: return@mapNotNull null
+        val points = (doc.getLong("points") ?: 0L).toInt()
+        val tasksCompleted = (doc.getLong("tasksCompleted") ?: 0L).toInt()
+        val photoUrl = doc.getString("photoUrl")
+
+        AppUser(
+            id = doc.id,
+            displayName = displayName,
+            points = points,
+            tasksCompleted = tasksCompleted,
+            photoUrl = photoUrl
+        )
+    }
 
 @Composable
 fun HomeScreen(
-    onProfileClick: () -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    onProfileClick: () -> Unit = {},
+    firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    auth: FirebaseAuth = FirebaseAuth.getInstance(),
 ) {
-    val userProfile = viewModel.userProfile
-    val isLoading = viewModel.isLoading
+    val currentUid = auth.currentUser?.uid
+
+    // Load users once. (If you want realtime updates later, use addSnapshotListener instead.)
+    val usersResult by produceState<Result<List<AppUser>>?>(initialValue = null, key1 = currentUid) {
+        value = runCatching {
+            firestore.collection("users").get().await().toUsers()
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO: Add Task */ },
-                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { /* TODO */ },
+                containerColor = MaterialTheme.colorScheme.primary, // Dark Green
                 contentColor = Color.White,
                 shape = CircleShape
             ) {
@@ -44,56 +90,92 @@ fun HomeScreen(
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background // Parchment
     ) { innerPadding ->
-        if (isLoading && userProfile == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                // Top Section - Dark Green Background
-                Surface(
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    TopProfileSection(
-                        profile = userProfile,
-                        onProfileClick = onProfileClick
-                    )
-                }
 
-                // Divider Line
-                HorizontalDivider(
-                    color = Color.White,
-                    thickness = 2.dp
-                )
-
-                // Bottom Section - Placeholder Leaderboard
-                LazyColumn(
+        when (val r = usersResult) {
+            null -> {
+                // Loading
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
                 ) {
-                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+            }
 
-                    // Default/Static data for now until league endpoint is ready
-                    item {
-                        RoommateRow(
-                            name = "You",
-                            place = "1st",
-                            points = userProfile?.points?.toInt() ?: 0,
-                            tasks = 0,
-                            isMe = true
+            else -> {
+                val users = r.getOrNull().orEmpty()
+                val currentUser = users.firstOrNull { it.id == currentUid }
+                val otherUsers = users.filterNot { it.id == currentUid }
+
+                // Generate random places for the other users.
+                val randomPlaces = remember(otherUsers) {
+                    val labels = listOf(
+                        "1st", "2nd", "3rd", "4th", "5th",
+                        "6th", "7th", "8th", "9th", "10th", "11th", "12th"
+                    )
+                    otherUsers.associate { it.id to labels.random(Random(System.currentTimeMillis())) }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    // Top Section - Dark Green Background
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        TopProfileSection(
+                            onProfileClick = onProfileClick,
+                            displayName = currentUser?.displayName ?: "Unknown User",
+                            points = currentUser?.points ?: 0,
+                            tasks = currentUser?.tasksCompleted ?: 0,
+                            place = "—" // can compute actual rank later
                         )
                     }
 
-                    item { Spacer(modifier = Modifier.height(72.dp)) }
+                    // Divider Line
+                    HorizontalDivider(
+                        color = Color.White,
+                        thickness = 2.dp
+                    )
+
+                    // Bottom Section
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item { Spacer(modifier = Modifier.height(8.dp)) }
+
+                        if (r.isFailure) {
+                            item {
+                                Text(
+                                    text = "Failed to load users: ${r.exceptionOrNull()?.message ?: "Unknown error"}",
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                        }
+
+                        items(otherUsers.size) { index ->
+                            val u = otherUsers[index]
+                            RoommateRow(
+                                name = u.displayName,
+                                place = randomPlaces[u.id] ?: "—",
+                                points = u.points,
+                                tasks = u.tasksCompleted
+                            )
+                        }
+
+                        item { Spacer(modifier = Modifier.height(72.dp)) } // Spacing for FAB
+                    }
                 }
             }
         }
@@ -102,8 +184,11 @@ fun HomeScreen(
 
 @Composable
 fun TopProfileSection(
-    profile: UserProfile?,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    displayName: String,
+    points: Int,
+    tasks: Int,
+    place: String,
 ) {
     Column(
         modifier = Modifier
@@ -114,6 +199,7 @@ fun TopProfileSection(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
+            // Placeholder profile pic (clickable for future)
             Box(
                 modifier = Modifier
                     .size(72.dp)
@@ -123,11 +209,9 @@ fun TopProfileSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = profile?.displayName?.take(1)?.uppercase() ?: "P",
+                    text = "Pic",
                     fontFamily = Ubuntu,
-                    color = Color.DarkGray,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    color = Color.DarkGray
                 )
             }
 
@@ -135,14 +219,13 @@ fun TopProfileSection(
 
             Column {
                 Text(
-                    text = profile?.displayName?.uppercase() ?: "LOADING...",
+                    text = displayName.uppercase(),
                     fontFamily = TradeWinds,
-                    fontSize = 32.sp,
-                    color = Color.White,
-                    lineHeight = 36.sp
+                    fontSize = 38.sp,
+                    color = Color.White
                 )
                 Text(
-                    text = "Welcome back!",
+                    text = "Season ends in 3 days",
                     fontFamily = Ubuntu,
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.8f)
@@ -156,8 +239,9 @@ fun TopProfileSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatItem(label = "POINTS", value = profile?.points?.toString() ?: "0")
-            StatItem(label = "TASKS", value = "0")
+            StatItem(label = "PLACE", value = place)
+            StatItem(label = "POINTS", value = points.toString())
+            StatItem(label = "TASKS", value = tasks.toString())
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -183,14 +267,11 @@ fun StatItem(label: String, value: String) {
 }
 
 @Composable
-fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Boolean = false) {
+fun RoommateRow(name: String, place: String, points: Int, tasks: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isMe) Color(0xFFE8F5E9) else Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
             modifier = Modifier
@@ -202,15 +283,14 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Bool
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(if (isMe) MaterialTheme.colorScheme.primary else Color.LightGray),
+                    .background(Color.LightGray),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = name.take(1).uppercase(),
+                    text = "Pic",
                     fontFamily = Ubuntu,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isMe) Color.White else Color.DarkGray
+                    fontSize = 12.sp,
+                    color = Color.DarkGray
                 )
             }
 
@@ -255,6 +335,6 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Bool
 @Composable
 fun HomeScreenPreview() {
     TrashTalkTheme {
-        // Mock Preview
+        HomeScreen(onProfileClick = {})
     }
 }
