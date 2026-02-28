@@ -1,5 +1,6 @@
 package com.usuhackathon.trashtalk.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,11 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.usuhackathon.trashtalk.data.AuthService
 import com.usuhackathon.trashtalk.data.UserCompletion
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
@@ -106,6 +109,8 @@ fun TimelineScreen(
 
 @Composable
 fun TimelinePostItem(completion: UserCompletion, requesterUid: String, leagueId: String) {
+    val context = LocalContext.current
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
@@ -140,8 +145,31 @@ fun TimelinePostItem(completion: UserCompletion, requesterUid: String, leagueId:
             val token = sha256(leagueId + requesterUid + "simple_salt")
             val imageUrl = "https://mrowberry.com/trashtalk/view_proof_image.php?f=${completion.proof_filename}&u=${requesterUid}&t=$token"
             
+            // Log the construction details
+            LaunchedEffect(imageUrl) {
+                Log.d("TimelineScreen", "Constructing image URL for completion ${completion.completion_id}")
+                Log.d("TimelineScreen", " - Filename: ${completion.proof_filename}")
+                Log.d("TimelineScreen", " - Requester: $requesterUid")
+                Log.d("TimelineScreen", " - Token: $token")
+                Log.d("TimelineScreen", " - Full URL: $imageUrl")
+            }
+
+            val imageRequest = remember(imageUrl) {
+                ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .listener(
+                        onStart = { Log.d("TimelineScreen", "Coil: Starting request for $imageUrl") },
+                        onSuccess = { _, _ -> Log.d("TimelineScreen", "Coil: Success for $imageUrl") },
+                        onError = { _, result -> 
+                            Log.e("TimelineScreen", "Coil: Error for $imageUrl", result.throwable)
+                            // If you see a 403 or 401, it's likely the token or UID parameters
+                        }
+                    )
+                    .build()
+            }
+
             AsyncImage(
-                model = imageUrl,
+                model = imageRequest,
                 contentDescription = "Proof",
                 modifier = Modifier
                     .padding(top = 8.dp)
@@ -151,6 +179,11 @@ fun TimelinePostItem(completion: UserCompletion, requesterUid: String, leagueId:
                     .background(Color.LightGray),
                 contentScale = ContentScale.Crop
             )
+        } else if (completion.has_proof) {
+            // Log why the image isn't even attempting to load
+            LaunchedEffect(completion.completion_id) {
+                Log.w("TimelineScreen", "Proof image exists but request not built: filename=${completion.proof_filename}, leagueId=$leagueId")
+            }
         }
     }
 }

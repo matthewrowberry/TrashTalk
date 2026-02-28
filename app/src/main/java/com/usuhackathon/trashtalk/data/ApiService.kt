@@ -1,6 +1,7 @@
 package com.usuhackathon.trashtalk.data
 
 import com.google.gson.GsonBuilder
+import com.google.gson.annotations.SerializedName
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
@@ -63,6 +64,7 @@ data class UserCompletion(
     val completed_at: String,
     val comments: String?,
     val has_proof: Boolean,
+    @SerializedName("proof_image_path")
     val proof_filename: String? = null
 )
 
