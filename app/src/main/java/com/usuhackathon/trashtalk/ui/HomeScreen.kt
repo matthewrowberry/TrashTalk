@@ -1,7 +1,6 @@
 package com.usuhackathon.trashtalk.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -15,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,220 +22,202 @@ import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
 
 @Composable
-fun HomeScreen(onProfileClick: () -> Unit = {}) {
+fun HomeScreen() {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { /* TODO */ },
-                containerColor = MaterialTheme.colorScheme.background, // Parchment for visibility
-                contentColor = MaterialTheme.colorScheme.primary, // Dark Green icon
+                containerColor = MaterialTheme.colorScheme.primary, // Dark Green
+                contentColor = Color.White,
                 shape = CircleShape
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Task")
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
-        containerColor = MaterialTheme.colorScheme.primary // Changed to dark green
+        containerColor = MaterialTheme.colorScheme.background // Parchment
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                TopProfileSection(onProfileClick = onProfileClick)
+            // Top Section - Dark Green Background
+            Surface(
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TopProfileSection()
             }
 
-            item {
-                Divider(
-                    color = MaterialTheme.colorScheme.background, // Changed to parchment
-                    thickness = 3.dp,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
+            // Divider Line
+            HorizontalDivider(
+                color = Color.White,
+                thickness = 2.dp
+            )
 
-            item {
-                RoommateSection(name = "Sammy", place = "1st", points = 320, tasks = 12)
-            }
+            // Bottom Section - Parchment Background with White Rows
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(8.dp)) }
 
-            item {
-                RoommateSection(name = "Tommy", place = "2nd", points = 150, tasks = 5)
-            }
+                item { RoommateRow(name = "Sammy", place = "1st", points = 320, tasks = 12) }
+                item { RoommateRow(name = "Tommy", place = "2nd", points = 150, tasks = 5) }
+                item { RoommateRow(name = "You", place = "3rd", points = 120, tasks = 4) }
+                item { RoommateRow(name = "Donald", place = "4th", points = 35, tasks = 2) }
+                item { RoommateRow(name = "Jeffrey Epstein", place = "5th", points = 5, tasks = 1) }
 
-            item {
-                RoommateSection(name = "You", place = "3rd", points = 120, tasks = 4)
-            }
-
-            item {
-                RoommateSection(name = "Donald", place = "4th", points = 35, tasks = 2)
-            }
-
-            item {
-                RoommateSection(name = "Jeffrey Epstein", place = "5th", points = 5, tasks = 1)
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(72.dp))
+                item { Spacer(modifier = Modifier.height(72.dp)) } // Spacing for FAB
             }
         }
     }
 }
 
 @Composable
-fun TopProfileSection(onProfileClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // White
+fun TopProfileSection() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(Color.LightGray)
-                        .clickable { onProfileClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Pic",
-                        fontFamily = Ubuntu,
-                        color = Color.DarkGray
-                    )
-                }
+                Text(
+                    text = "Pic",
+                    fontFamily = Ubuntu,
+                    color = Color.DarkGray
+                )
+            }
 
-                Spacer(modifier = Modifier.width(16.dp))
+            // Increased padding between picture and text
+            Spacer(modifier = Modifier.width(32.dp))
 
+            Column {
                 Text(
                     text = "JOHN DOE",
                     fontFamily = TradeWinds,
                     fontSize = 38.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color.White
                 )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
                 Text(
-                    text = "Your Stats",
+                    text = "Season ends in 3 days",
                     fontFamily = Ubuntu,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.8f)
                 )
-
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.primary
-                ) {
-                    Text(
-                        text = "Season ends in 3 days",
-                        fontFamily = Ubuntu,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        color = Color.White
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    StatBubble(text = "Place\n3/8")
-                    StatBubble(text = "Points\n120")
-                    StatBubble(text = "Tasks\n4")
-                }
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            StatItem(label = "PLACE", value = "3rd")
+            StatItem(label = "POINTS", value = "120")
+            StatItem(label = "TASKS", value = "4")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
 @Composable
-fun RoommateSection(name: String, place: String, points: Int, tasks: Int) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+fun StatItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = name,
-            fontFamily = Ubuntu,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.background // Changed to parchment to contrast with dark green background
+            text = value,
+            fontFamily = TradeWinds, // Updated to TradeWinds
+            fontSize = 28.sp,
+            color = Color.White
         )
+        Text(
+            text = label,
+            fontFamily = Ubuntu,
+            fontSize = 12.sp,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+    }
+}
 
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background) // Changed to parchment
+@Composable
+fun RoommateRow(name: String, place: String, points: Int, tasks: Int) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
+            // Small Profile Picture Placeholder
+            Box(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray),
+                contentAlignment = Alignment.Center
             ) {
+                Text(
+                    text = "Pic",
+                    fontFamily = Ubuntu,
+                    fontSize = 12.sp,
+                    color = Color.DarkGray
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Name and Place
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = name,
+                    fontFamily = Ubuntu,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.DarkGray
+                )
                 Text(
                     text = place,
                     fontFamily = Ubuntu,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    fontSize = 14.sp,
+                    color = Color.Gray
                 )
+            }
+
+            // Stats
+            Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "$points pts",
                     fontFamily = Ubuntu,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     text = "$tasks tasks",
                     fontFamily = Ubuntu,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    fontSize = 14.sp,
+                    color = Color.Gray
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun StatBubble(text: String) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.background, // Changed to parchment
-        modifier = Modifier.size(64.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = text,
-                fontFamily = Ubuntu,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
