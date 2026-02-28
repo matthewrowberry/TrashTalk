@@ -14,6 +14,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.usuhackathon.trashtalk.login.LoginViewModel
+import com.usuhackathon.trashtalk.storage.UserData
 import com.usuhackathon.trashtalk.data.AuthService
 import com.usuhackathon.trashtalk.data.FirestoreService
 import com.usuhackathon.trashtalk.data.UserProfile
