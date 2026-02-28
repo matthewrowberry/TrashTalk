@@ -21,6 +21,12 @@ import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
 import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.usuhackathon.trashtalk.R
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 
 @Composable
 fun LoginScreen(
@@ -42,11 +48,17 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Delete,
+        Image(
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo",
-            modifier = Modifier.size(120.dp),
-            tint = MaterialTheme.colorScheme.primary
+            modifier = Modifier
+                .size(120.dp)
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFF1a2517),
+                    shape = RoundedCornerShape(16.dp) // Adjust radius as needed
+                )
+                .clip(RoundedCornerShape(16.dp))
         )
 
         Spacer(modifier = Modifier.height(16.dp))
