@@ -3,12 +3,15 @@ package com.usuhackathon.trashtalk.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,7 +21,6 @@ import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
 import com.usuhackathon.trashtalk.ui.theme.TradeWinds
 import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import kotlinx.coroutines.launch
-import androidx.compose.material3.LocalTextStyle
 
 @Composable
 fun LoginScreen(
@@ -27,6 +29,7 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
@@ -72,7 +75,19 @@ fun LoginScreen(
             onValueChange = { password = it; errorMessage = null },
             label = { Text(text = "Password", fontFamily = Ubuntu) },
             textStyle = LocalTextStyle.current.copy(fontFamily = Ubuntu, color = Color.Black),
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val image = if (passwordVisible)
+                    Icons.Filled.Visibility
+                else
+                    Icons.Filled.VisibilityOff
+
+                val description = if (passwordVisible) "Hide password" else "Show password"
+
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = image, contentDescription = description)
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
 
