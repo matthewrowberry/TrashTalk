@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.tasks.await
 
 sealed class AuthResult {
@@ -21,9 +22,17 @@ object AuthService {
     val currentUser: FirebaseUser?
         get() = auth.currentUser
 
-    suspend fun signUp(email: String, password: String): String {
+    suspend fun signUp(email: String, password: String, displayName: String): String {
         val result = auth.createUserWithEmailAndPassword(email, password).await()
-        return result.user?.uid ?: throw IllegalStateException("Sign up succeeded but uid was null")
+        val user = result.user ?: throw IllegalStateException("Sign up succeeded but uid was null")
+        
+        val profileUpdates = UserProfileChangeRequest.Builder()
+            .setDisplayName(displayName)
+            .build()
+        
+        user.updateProfile(profileUpdates).await()
+        
+        return user.uid
     }
 
     suspend fun signIn(email: String, password: String): AuthResult {

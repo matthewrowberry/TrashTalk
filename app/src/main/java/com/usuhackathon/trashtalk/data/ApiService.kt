@@ -20,6 +20,7 @@ data class GenericResponse(val success: Boolean, val error: String? = null)
 
 data class LeagueMember(
     val user_uid: String,
+    val display_name: String? = null,
     val total_points: Int,
     val completed_count: Int
 )
@@ -69,6 +70,7 @@ data class UserCompletionsResponse(val completions: List<UserCompletion>)
 
 data class LeaderboardEntry(
     val user_uid: String,
+    val display_name: String? = null,
     val total_points: Int,
     val completed_count: Int
 )

@@ -74,7 +74,7 @@ fun SignUpScreen(
             onClick = {
                 scope.launch {
                     try {
-                        val uid = AuthService.signUp(email.trim(), password)
+                        val uid = AuthService.signUp(email.trim(), password, displayName.trim())
 
                         val profile = UserProfile(
                             displayName = displayName.trim(),
