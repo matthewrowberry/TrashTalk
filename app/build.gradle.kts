@@ -5,6 +5,8 @@ plugins {
 }
 
 android {
+    namespace = "com.usuhackathon.trashtalk"
+
 
     defaultConfig {
         applicationId = "com.usuhackathon.trashtalk"

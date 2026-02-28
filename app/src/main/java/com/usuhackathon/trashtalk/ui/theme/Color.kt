@@ -1,4 +1,4 @@
-package com.example.trashtalk.ui.theme
+package com.usuhackathon.trashtalk.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

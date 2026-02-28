@@ -1,4 +1,4 @@
-package com.example.trashtalk.ui
+package com.usuhackathon.trashtalk.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -12,7 +12,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.trashtalk.ui.theme.TrashTalkTheme
+import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
 
 @Composable
 fun LoginScreen() {
