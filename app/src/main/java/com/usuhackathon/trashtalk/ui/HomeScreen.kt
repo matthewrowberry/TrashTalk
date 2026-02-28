@@ -8,8 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,7 +52,10 @@ fun HomeScreen(
     if (state.userProfile != null && state.userProfile.leagueID.isEmpty()) {
         NoLeagueView(
             onCreateLeague = { name, desc -> viewModel.createLeague(name, desc) },
-            onJoinLeague = { id -> viewModel.joinLeague(id) }
+            onJoinLeague = { id -> viewModel.joinLeague(id) },
+            onSearch = { query -> viewModel.searchLeagues(query) },
+            searchResults = state.leagueSearchResults,
+            isLoading = state.isLoading
         )
     } else {
         Scaffold(
@@ -150,29 +156,92 @@ private fun getOrdinal(i: Int): String {
 }
 
 @Composable
-fun NoLeagueView(onCreateLeague: (String, String) -> Unit, onJoinLeague: (String) -> Unit) {
+fun NoLeagueView(
+    onCreateLeague: (String, String) -> Unit,
+    onJoinLeague: (String) -> Unit,
+    onSearch: (String) -> Unit,
+    searchResults: List<League>,
+    isLoading: Boolean
+) {
     var name by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
-    var leagueId by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp)
+            .imePadding()
+            .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
+        Spacer(modifier = Modifier.height(48.dp))
         Text("You are not in a league!", style = MaterialTheme.typography.headlineMedium, fontFamily = TradeWinds)
         Spacer(modifier = Modifier.height(24.dp))
         
         Text("Create a League", style = MaterialTheme.typography.titleLarge)
         OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("League Name") })
         OutlinedTextField(value = desc, onValueChange = { desc = it }, label = { Text("Description") })
-        Button(onClick = { onCreateLeague(name, desc) }) { Text("Create") }
+        Button(
+            onClick = { 
+                keyboardController?.hide()
+                onCreateLeague(name, desc) 
+            }, 
+            modifier = Modifier.padding(top = 8.dp),
+            enabled = !isLoading
+        ) { 
+            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+            else Text("Create") 
+        }
         
         Spacer(modifier = Modifier.height(32.dp))
         
         Text("Or Join a League", style = MaterialTheme.typography.titleLarge)
-        OutlinedTextField(value = leagueId, onValueChange = { leagueId = it }, label = { Text("League ID") })
-        Button(onClick = { onJoinLeague(leagueId) }) { Text("Join") }
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = {
+                searchQuery = it
+                onSearch(it)
+            },
+            label = { Text("Search League Name") }
+        )
+        
+        if (searchResults.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 250.dp)
+                    .padding(top = 8.dp)
+                    .background(Color.Gray.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+            ) {
+                LazyColumn {
+                    itemsIndexed(searchResults) { _, league ->
+                        ListItem(
+                            headlineContent = { Text(league.name) },
+                            supportingContent = { Text(league.description) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { 
+                                    keyboardController?.hide()
+                                    onJoinLeague(league.id) 
+                                }
+                        )
+                    }
+                }
+            }
+        } else if (searchQuery.length >= 2) {
+             Text("No leagues found", modifier = Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall)
+        }
+        
+        if (isLoading) {
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator()
+        }
+        
+        Spacer(modifier = Modifier.height(48.dp))
     }
 }
 

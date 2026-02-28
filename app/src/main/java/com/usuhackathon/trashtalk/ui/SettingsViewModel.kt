@@ -56,7 +56,7 @@ class SettingsViewModel : ViewModel() {
                         league_id = leagueId,
                         name = name,
                         description = description,
-                        points = points
+                        points = points.toString()
                     )
                 )
                 if (resp.success) {
@@ -80,7 +80,7 @@ class SettingsViewModel : ViewModel() {
                     chore_id = choreId,
                     name = name,
                     description = description,
-                    points = points
+                    points = points?.toString()
                 )
 
                 val resp = RetrofitClient.instance.editChore(req)

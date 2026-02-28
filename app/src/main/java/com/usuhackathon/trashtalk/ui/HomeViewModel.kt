@@ -21,7 +21,8 @@ data class HomeState(
     val leaderboard: List<LeaderboardEntry> = emptyList(),
     val chores: List<Chore> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val leagueSearchResults: List<League> = emptyList()
 )
 
 class HomeViewModel : ViewModel() {
@@ -52,6 +53,21 @@ class HomeViewModel : ViewModel() {
                 state = state.copy(error = e.message)
             } finally {
                 state = state.copy(isLoading = false)
+            }
+        }
+    }
+
+    fun searchLeagues(query: String) {
+        if (query.length < 2) {
+            state = state.copy(leagueSearchResults = emptyList())
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val results = RetrofitClient.instance.searchLeagues(query)
+                state = state.copy(leagueSearchResults = results)
+            } catch (e: Exception) {
+                state = state.copy(leagueSearchResults = emptyList())
             }
         }
     }

@@ -1,7 +1,10 @@
 package com.usuhackathon.trashtalk.data
 
+import com.google.gson.GsonBuilder
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
 import okhttp3.RequestBody
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
@@ -36,7 +39,7 @@ data class CreateChoreRequest(
     val league_id: String,
     val name: String,
     val description: String,
-    val points: Int
+    val points: String // Changed to String for better compatibility
 )
 
 data class EditChoreRequest(
@@ -44,7 +47,7 @@ data class EditChoreRequest(
     val chore_id: String,
     val name: String? = null,
     val description: String? = null,
-    val points: Int? = null
+    val points: String? = null // Changed to String for better compatibility
 )
 
 data class CreateChoreResponse(val success: Boolean, val chore_id: String? = null, val error: String? = null)
@@ -133,10 +136,23 @@ interface ApiService {
 object RetrofitClient {
     private const val BASE_URL = "https://mrowberry.com/trashtalk/"
 
+    private val logging = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+
+    private val client = OkHttpClient.Builder()
+        .addInterceptor(logging)
+        .build()
+
+    private val gson = GsonBuilder()
+        .setLenient() // Make GSON more tolerant of malformed JSON
+        .create()
+
     val instance: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(ApiService::class.java)
     }
