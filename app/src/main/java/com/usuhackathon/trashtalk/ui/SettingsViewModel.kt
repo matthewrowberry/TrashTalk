@@ -26,7 +26,7 @@ class SettingsViewModel : ViewModel() {
     fun loadChores() {
         val uid = AuthService.currentUser?.uid ?: return
         viewModelScope.launch {
-            state = state.copy(isLoading = true)
+            state = state.copy(isLoading = true, error = null)
             try {
                 val profile = FirestoreService.getUserProfile(uid)
                 state = state.copy(leagueID = profile.leagueID)
@@ -48,6 +48,7 @@ class SettingsViewModel : ViewModel() {
         if (leagueId.isEmpty()) return
 
         viewModelScope.launch {
+            state = state.copy(isLoading = true, error = null)
             try {
                 val resp = RetrofitClient.instance.createChore(mapOf(
                     "user_uid" to uid,
@@ -58,9 +59,11 @@ class SettingsViewModel : ViewModel() {
                 ))
                 if (resp.success) {
                     loadChores()
+                } else {
+                    state = state.copy(error = resp.error ?: "Failed to add chore", isLoading = false)
                 }
             } catch (e: Exception) {
-                state = state.copy(error = e.message)
+                state = state.copy(error = e.message, isLoading = false)
             }
         }
     }
@@ -68,6 +71,7 @@ class SettingsViewModel : ViewModel() {
     fun updateChore(choreId: String, name: String?, description: String?, points: Int?) {
         val uid = AuthService.currentUser?.uid ?: return
         viewModelScope.launch {
+            state = state.copy(isLoading = true, error = null)
             try {
                 val body = mutableMapOf<String, Any>("user_uid" to uid, "chore_id" to choreId)
                 name?.let { body["name"] = it }
@@ -77,9 +81,11 @@ class SettingsViewModel : ViewModel() {
                 val resp = RetrofitClient.instance.editChore(body)
                 if (resp.success) {
                     loadChores()
+                } else {
+                    state = state.copy(error = resp.error ?: "Failed to update chore", isLoading = false)
                 }
             } catch (e: Exception) {
-                state = state.copy(error = e.message)
+                state = state.copy(error = e.message, isLoading = false)
             }
         }
     }
@@ -87,6 +93,7 @@ class SettingsViewModel : ViewModel() {
     fun deleteChore(choreId: String) {
         val uid = AuthService.currentUser?.uid ?: return
         viewModelScope.launch {
+            state = state.copy(isLoading = true, error = null)
             try {
                 val resp = RetrofitClient.instance.deleteChore(mapOf(
                     "user_uid" to uid,
@@ -94,10 +101,16 @@ class SettingsViewModel : ViewModel() {
                 ))
                 if (resp.success) {
                     loadChores()
+                } else {
+                    state = state.copy(error = resp.error ?: "Failed to delete chore", isLoading = false)
                 }
             } catch (e: Exception) {
-                state = state.copy(error = e.message)
+                state = state.copy(error = e.message, isLoading = false)
             }
         }
+    }
+
+    fun clearError() {
+        state = state.copy(error = null)
     }
 }

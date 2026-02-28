@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,8 +32,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.usuhackathon.trashtalk.ui.theme.TrashTalkTheme
-import com.usuhackathon.trashtalk.ui.theme.TradeWinds
-import com.usuhackathon.trashtalk.ui.theme.Ubuntu
 import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
@@ -257,7 +256,7 @@ fun TopProfileSection(
 
             Column {
                 Text(
-                    text = displayName.uppercase(),
+                    text = (profile?.displayName ?: "User").uppercase(),
                     fontFamily = TradeWinds,
                     fontSize = 38.sp,
                     lineHeight = 46.sp, // adds space between lines if the name wraps
@@ -376,6 +375,6 @@ fun RoommateRow(name: String, place: String, points: Int, tasks: Int, isMe: Bool
 @Composable
 fun HomeScreenPreview() {
     TrashTalkTheme {
-        HomeScreen(onProfileClick = {})
+        HomeScreen(onProfileClick = {}, onUserClick = { _, _ -> })
     }
 }

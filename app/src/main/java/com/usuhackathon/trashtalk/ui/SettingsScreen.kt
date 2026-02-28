@@ -27,6 +27,14 @@ fun SettingsScreen(
     val state = viewModel.state
     var showAddDialog by remember { mutableStateOf(false) }
     var editingChore by remember { mutableStateOf<Chore?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -39,6 +47,7 @@ fun SettingsScreen(
                 }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (state.leagueID.isNotEmpty()) {
                 FloatingActionButton(onClick = { showAddDialog = true }) {
@@ -47,44 +56,49 @@ fun SettingsScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Manage Chores",
-                style = MaterialTheme.typography.headlineSmall,
-                fontFamily = Ubuntu
-            )
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Manage Chores",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontFamily = Ubuntu
+                )
 
-            if (state.leagueID.isEmpty()) {
-                Text("Join a league to manage chores.")
-            } else {
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(state.chores) { chore ->
-                        ChoreManagementRow(
-                            chore = chore,
-                            onEdit = { editingChore = chore },
-                            onDelete = { viewModel.deleteChore(chore.id) }
-                        )
+                if (state.leagueID.isEmpty()) {
+                    Text("Join a league to manage chores.")
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(state.chores) { chore ->
+                            ChoreManagementRow(
+                                chore = chore,
+                                onEdit = { editingChore = chore },
+                                onDelete = { viewModel.deleteChore(chore.id) }
+                            )
+                        }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onLogout,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("LOG OUT", fontFamily = Ubuntu)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = onLogout,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text("LOG OUT", fontFamily = Ubuntu)
+            if (state.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }
@@ -147,14 +161,34 @@ fun ChoreDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") })
-                OutlinedTextField(value = desc, onValueChange = { desc = it }, label = { Text("Description") })
-                OutlinedTextField(value = pts, onValueChange = { pts = it }, label = { Text("Points") })
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = desc,
+                    onValueChange = { desc = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = pts,
+                    onValueChange = { pts = it },
+                    label = { Text("Points") },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
-            Button(onClick = { onConfirm(name, desc, pts.toIntOrNull() ?: 0) }) { Text("Save") }
+            Button(
+                onClick = { onConfirm(name, desc, pts.toIntOrNull() ?: 0) },
+                enabled = name.isNotBlank() && pts.toIntOrNull() != null
+            ) {
+                Text("Save")
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }

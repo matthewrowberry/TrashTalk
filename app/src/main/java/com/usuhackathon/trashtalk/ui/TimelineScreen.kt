@@ -4,13 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,52 +44,30 @@ fun TimelineScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(userName, fontFamily = TradeWinds) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.LightGray),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = userName.take(1).uppercase(),
+                                fontSize = 16.sp,
+                                fontFamily = Ubuntu,
+                                color = Color.DarkGray,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(userName, fontFamily = TradeWinds)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-        containerColor = MaterialTheme.colorScheme.background // Parchment
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            // 1. Fixed Top Banner - Patterned after HomeScreen header
-            Surface(
-                color = MaterialTheme.colorScheme.primary, // Dark Green
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Back Arrow Button
-                    IconButton(
-                        onClick = { /* TODO: Add back logic later */ },
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-
-                    // Profile Picture Placeholder
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                            .background(Color.LightGray)
-                            .clickable {}, // Added clickable modifier just in case
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Pic",
-                            fontFamily = Ubuntu,
-                            color = Color.DarkGray
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -105,7 +80,7 @@ fun TimelineScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         if (state.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         } else {
@@ -114,6 +89,13 @@ fun TimelineScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                if (state.completions.isEmpty()) {
+                    item {
+                        Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("No history yet!", fontFamily = Ubuntu, color = Color.Gray)
+                        }
+                    }
+                }
                 items(state.completions) { completion ->
                     TimelinePostItem(completion, requesterUid, state.leagueId)
                 }
